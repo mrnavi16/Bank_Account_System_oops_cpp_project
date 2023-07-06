@@ -1,0 +1,124 @@
+#include <iostream>
+#include <string>
+
+class Account {
+protected:
+    std::string accountTitle;
+    int serialNumber;
+    int accountNumber;
+    double balance;
+
+public:
+    Account(const std::string& title, int serial, int accNumber, double initialBalance)
+        : accountTitle(title), serialNumber(serial), accountNumber(accNumber), balance(initialBalance) {}
+
+    void credit(double amount) {
+        balance += amount;
+    }
+
+    virtual void debit(double amount) {
+        if (amount <= balance)
+            balance -= amount;
+        else
+            std::cout << "Insufficient balance for withdrawal." << std::endl;
+    }
+
+    virtual void calculateInterest() = 0;
+
+    void displayBalance() {
+        std::cout << "Account Holder: " << accountTitle << std::endl;
+        std::cout << "Account Number: " << accountNumber << std::endl;
+        std::cout << "Balance: " << balance << std::endl;
+    }
+};
+
+class PlusAccount : public Account {
+private:
+    double interestRate;
+
+public:
+    PlusAccount(const std::string& title, int serial, int accNumber, double initialBalance, double interest)
+        : Account(title, serial, accNumber, initialBalance), interestRate(interest) {}
+
+    void calculateInterest() override {
+        double interestAmount = balance * interestRate;
+        balance += interestAmount;
+    }
+};
+
+class FreedomAccount : public Account {
+private:
+    double transactionFee;
+    double interestAmount;
+
+public:
+    FreedomAccount(const std::string& title, int serial, int accNumber, double initialBalance, double fee, double interest)
+        : Account(title, serial, accNumber, initialBalance), transactionFee(fee), interestAmount(interest) {}
+
+    void debit(double amount) override {
+        if (amount + transactionFee <= balance) {
+            balance -= (amount + transactionFee);
+        } else {
+            std::cout << "Insufficient balance for withdrawal." << std::endl;
+        }
+    }
+
+    void calculateInterest() override {
+        balance += interestAmount;
+    }
+};
+
+int main() {
+    Account* accounts[10];
+
+    // Creating 5 accounts using dynamic memory allocation
+    for (int i = 0; i < 5; i++) {
+        std::string accountTitle;
+        int serialNumber, accountNumber;
+        double initialBalance;
+
+        std::cout << "Enter account title: ";
+        std::getline(std::cin >> std::ws, accountTitle);
+        std::cout << "Enter serial number: ";
+        std::cin >> serialNumber;
+        std::cout << "Enter account number: ";
+        std::cin >> accountNumber;
+        std::cout << "Enter initial balance: ";
+        std::cin >> initialBalance;
+
+        int accountType;
+        std::cout << "Enter account type (1 for Plus, 2 for Freedom): ";
+        std::cin >> accountType;
+
+        if (accountType == 1) {
+            double interestRate;
+            std::cout << "Enter interest rate for Plus account: ";
+            std::cin >> interestRate;
+            accounts[i] = new PlusAccount(accountTitle, serialNumber, accountNumber, initialBalance, interestRate);
+        } else if (accountType == 2) {
+            double transactionFee, interestAmount;
+            std::cout << "Enter transaction fee for Freedom account: ";
+            std::cin >> transactionFee;
+            std::cout << "Enter interest amount for Freedom account: ";
+            std::cin >> interestAmount;
+
+            accounts[i] = new FreedomAccount(accountTitle, serialNumber, accountNumber, initialBalance, transactionFee, interestAmount);
+        } else {
+            std::cout << "Invalid account type. Creating a regular Account." << std::endl;
+            continue; // Skip creating an object for this iteration
+        }
+    }
+
+    // Performing transactions on the first account
+    accounts[0]->credit(500);
+    accounts[0]->debit(200);
+    accounts[0]->calculateInterest();
+    accounts[0]->displayBalance();
+
+    // Clean up memory
+    for (int i = 0; i < 5; i++) {
+        delete accounts[i];
+    }
+
+    return 0;
+}
